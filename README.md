@@ -1,2 +1,5 @@
 # anagram-find
-Anagram finder. Helmes challenge
+Find anagrams for given word in dictionary.
+
+# TODO
+Tests
