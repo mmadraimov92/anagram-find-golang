@@ -5,17 +5,17 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strings"
 	"sync"
 	"time"
 	"unicode"
-	"unicode/utf8"
 
 	"golang.org/x/text/transform"
 )
 
 var (
 	word    = flag.String("w", "", "Input word to search for anagram")
-	dict    = flag.String("d", "lemmad.txt", "Dictionary to search from")
+	dict    = flag.String("d", "", "Dictionary to search from")
 	charEnc = flag.String("e", "windows-1257", "Encoding of dictionary file")
 )
 
@@ -24,91 +24,107 @@ const (
 	workers  = 4 * 16 // Number of worker routines to spawn
 )
 
-var wordsToCompare = make(chan string, workers)
-var result []string
-var wg sync.WaitGroup
+type anagram struct {
+	mainWord       string      // Main word to find anagrams of
+	enc            encType     // charset of dictionary file - default windows-1257
+	dictionary     string      // dictionary file
+	wordsToCompare chan string // channel to send dictionary words
+	result         []string    // list of found anagrams
+	wg             sync.WaitGroup
+}
 
 func main() {
 	start := time.Now()
-	flag.Parse()
-	if *word == "" {
-		fmt.Println("Please input word with '-w'")
-		return
-	}
 
-	enc, ok := encodings[*charEnc]
-	if !ok {
-		fmt.Println("Please select correct encoding with '-e'. Check charset_table.go for reference.")
-		return
-	}
+	var anagram anagram
+	anagram.initializeAnagram()
 
-	startJob(&enc)
+	anagram.findAnagram()
 	elapsed := time.Since(start)
-	fmt.Println(int64(elapsed/time.Microsecond), "µs")
-	fmt.Println("Word: ", *word)
-	fmt.Println("Anagrams:", result)
+	fmt.Print(int64(elapsed/time.Microsecond), ",")
+	fmt.Println(strings.Join(anagram.result, ","))
 	return
 }
 
-func startJob(enc *encType) {
-	go producer()
+func (a *anagram) initializeAnagram() {
+	flag.Usage = func() {
+		fmt.Println("Usage: anagram-find -w <word> -d <dictionary> [-e <encoding>]")
+		os.Exit(2)
+	}
+	flag.Parse()
+	if *word == "" {
+		flag.Usage()
+	}
+	a.mainWord = *word
+
+	if *dict == "" {
+		flag.Usage()
+	}
+	a.dictionary = *dict
+
+	var ok bool
+	a.enc, ok = encodings[*charEnc]
+	if !ok {
+		fmt.Println("Please select correct encoding with '-e'. Check charset_table.go for reference.")
+		flag.Usage()
+	}
+
+	a.wordsToCompare = make(chan string, workers)
+}
+
+func (a *anagram) findAnagram() {
+	go a.producer()
 
 	for i := 0; i < workers; i++ {
-		wg.Add(1)
-		go worker(enc)
+		a.wg.Add(1)
+		go a.worker()
 	}
-	wg.Wait()
+	a.wg.Wait()
 }
 
-func producer() {
-	file, err := os.Open(*dict)
+func (a *anagram) producer() {
+	file, err := os.Open(a.dictionary)
+	check(err)
 	defer func() {
 		file.Close()
-		close(wordsToCompare)
+		close(a.wordsToCompare)
 	}()
-	check(err)
 
 	scanner := bufio.NewScanner(file)
-
 	for scanner.Scan() {
-		line := scanner.Text()
-		wordsToCompare <- line
+		a.wordsToCompare <- scanner.Text()
 	}
+
 }
 
-func worker(enc *encType) {
-	defer wg.Done()
+func (a *anagram) worker() {
+	defer a.wg.Done()
 
-	for line := range wordsToCompare {
-		wordFromDict, _, err := transform.String(*enc.e.NewDecoder(), line)
+	for line := range a.wordsToCompare {
+		wordFromDict, _, err := transform.String(a.enc.e.NewDecoder(), line)
 		check(err)
-		if isAnagram(word, &wordFromDict) {
-			result = append(result, wordFromDict)
+		if isAnagram(a.mainWord, wordFromDict) {
+			a.result = append(a.result, wordFromDict)
 		}
 	}
 }
 
-func isAnagram(str1, str2 *string) bool {
-	if len(*str1) != len(*str2) {
+func isAnagram(str1, str2 string) bool {
+	if len(str1) != len(str2) {
 		return false
 	}
 
 	count := make([]int, charsNum)
 
-	var i int
-	for i = 0; i < len(*str1); {
-		r1, size := utf8.DecodeRuneInString((*str1)[i:])
+	for _, r1 := range str1 {
 		count[int(unicode.ToLower(r1))]++
-		i += size
 	}
 
-	for i = 0; i < len(*str2); {
-		r2, size := utf8.DecodeRuneInString((*str2)[i:])
+	for _, r2 := range str2 {
 		count[int(unicode.ToLower(r2))]--
-		i += size
 	}
 
-	for i = 0; i < charsNum; i++ {
+	for i := 0; i < charsNum; i++ {
 		if count[i] != 0 {
 			return false
 		}
