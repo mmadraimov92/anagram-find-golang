@@ -30,6 +30,7 @@ type anagram struct {
 	dictionary     string      // dictionary file
 	wordsToCompare chan string // channel to send dictionary words
 	result         []string    // list of found anagrams
+	mutex          sync.Mutex
 	wg             sync.WaitGroup
 }
 
@@ -104,7 +105,9 @@ func (a *anagram) worker() {
 		wordFromDict, _, err := transform.String(a.enc.e.NewDecoder(), line)
 		check(err)
 		if isAnagram(a.mainWord, wordFromDict) {
+			a.mutex.Lock()
 			a.result = append(a.result, wordFromDict)
+			a.mutex.Unlock()
 		}
 	}
 }
