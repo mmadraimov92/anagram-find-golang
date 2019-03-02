@@ -1,0 +1,9 @@
+# Release
+*.zip
+
+# Test files
+profile/
+*.test
+
+# Dictionary file
+*.txt
