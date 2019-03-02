@@ -16,3 +16,4 @@ deps:
 clean:
 	go clean
 	rm -rf profile
+	rm -rf src.test
