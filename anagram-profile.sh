@@ -4,7 +4,7 @@ function printLine() {
     printf "\n================= $1 ====================="
 }
 
-mkdir profile
+mkdir -p profile
 {
     printLine "BENCHMEM"
     go test -bench=. -benchmem
