@@ -2,6 +2,7 @@
 *.zip
 
 # Test files
+release/
 profile/
 *.test
 

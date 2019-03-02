@@ -5,7 +5,9 @@ all: deps build
 
 build:
 	CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w -extldflags "-static"' -o bin/$(binary_name) $(files)
-	zip $(binary_name)-linux.zip bin/$(binary_name)
+
+	mkdir -p release
+	zip release/$(binary_name)-linux.zip bin/$(binary_name)
 
 deps:
 	go get golang.org/x/text/transform
