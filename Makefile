@@ -1,4 +1,4 @@
-files = main.go anagram.go charset_table.go
+files = src/*
 binary_name = anagram-find
 
 all: deps build
