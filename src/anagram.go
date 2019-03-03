@@ -45,13 +45,15 @@ func (a *anagram) producer() {
 		close(a.wordsToCompare)
 	}()
 
-	var done = make(chan bool, workers)
-	var chunks = make(chan []byte, workers)
+	producers := workers
+
+	var done = make(chan bool, producers)
+	var chunks = make(chan []byte, producers)
 
 	file, err := ioutil.ReadFile(a.dictionary)
 	check(err)
 
-	go split(file, len(file)/workers, chunks)
+	go split(file, len(file)/producers, chunks)
 
 	for v := range chunks {
 		go func(v []byte) {
@@ -63,7 +65,7 @@ func (a *anagram) producer() {
 		}(v)
 	}
 
-	for i := 0; i < workers; i++ {
+	for i := 0; i < producers; i++ {
 		<-done
 	}
 }
