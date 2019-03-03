@@ -4,6 +4,7 @@ function printLine() {
     printf "\n================= $1 ====================="
 }
 
+make clean
 output="profile_all.txt"
 
 if [ "$1" != "" ]; then
