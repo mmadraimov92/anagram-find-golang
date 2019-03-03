@@ -91,18 +91,21 @@ func isAnagram(str1, str2 string) bool {
 	if len(str1) != len(str2) {
 		return false
 	}
-	count := make([]int, charsNum)
+	// histSize := charsNum
+	histogram := make([]int, charsNum)
 
 	for _, r1 := range str1 {
-		count[int(unicode.ToLower(r1))]++
+		ord := int(unicode.ToLower(r1))
+		histogram[ord]++
 	}
 
 	for _, r2 := range str2 {
-		count[int(unicode.ToLower(r2))]--
+		ord := int(unicode.ToLower(r2))
+		histogram[ord]--
 	}
 
 	for i := 0; i < charsNum; i++ {
-		if count[i] != 0 {
+		if histogram[i] != 0 {
 			return false
 		}
 	}
