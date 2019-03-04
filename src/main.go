@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"reflect"
 	"strings"
 	"time"
 )
@@ -29,7 +30,13 @@ func main() {
 	elapsed := time.Since(start)
 
 	fmt.Print(int64(elapsed/time.Microsecond), ",")
-	fmt.Println(strings.Join(a.result, ","))
+	keys := reflect.ValueOf(a.result).MapKeys()
+	strkeys := make([]string, len(keys))
+	for i := 0; i < len(keys); i++ {
+		strkeys[i] = keys[i].String()
+	}
+	fmt.Println(strings.Join(strkeys, ","))
+
 	return
 }
 

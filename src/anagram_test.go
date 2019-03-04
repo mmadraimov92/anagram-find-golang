@@ -24,19 +24,32 @@ func TestIntegration(t *testing.T) {
 		word    string
 		dict    string
 		charEnc string
-		answer  []string
+		keys    []string
 	}{
 		{"Estonian1", "dais", "../lemmad.txt", "windows-1257", []string{"AIDS"}},
-		{"Estonian2", "eesti", "../lemmad.txt", "windows-1257", []string{"eesti", "eetsi", "eiste"}},
+		{"Estonian2", "eesti", "../lemmad.txt", "windows-1257", []string{"eetsi", "eesti", "eiste"}},
 	}
 
 	for _, tt := range tests {
 		var a *anagram
 		a = newAnagram(&tt.dict, &tt.charEnc)
 		a.findAnagram(&tt.word)
-		if !reflect.DeepEqual(a.result, tt.answer) {
-			t.Error("Expected:", tt.answer, "got:", a.result)
-		}
+		func() {
+			keys := reflect.ValueOf(a.result).MapKeys()
+			strkeys := make([]string, len(keys))
+			for i := 0; i < len(keys); i++ {
+				strkeys[i] = keys[i].String()
+			}
+			if len(strkeys) != len(tt.keys) {
+				t.Error("Wrong number of items")
+				t.Error("Expected:", tt.keys, "got:", strkeys)
+			}
+			for _, key := range tt.keys {
+				if _, ok := a.result[key]; !ok {
+					t.Error("Missing: ", key)
+				}
+			}
+		}()
 	}
 }
 func TestIsAnagram(t *testing.T) {

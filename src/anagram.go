@@ -12,10 +12,10 @@ import (
 )
 
 type anagram struct {
-	enc            encType     // charset of dictionary file - default windows-1257
-	dictionary     string      // dictionary file
-	wordsToCompare chan string // channel to send dictionary words
-	result         []string    // list of found anagrams
+	enc            encType             // charset of dictionary file - default windows-1257
+	dictionary     string              // dictionary file
+	wordsToCompare chan string         // channel to send dictionary words
+	result         map[string]struct{} // list of found anagrams
 	mutex          sync.Mutex
 	wg             sync.WaitGroup
 }
@@ -26,6 +26,7 @@ func newAnagram(dict, charset *string) *anagram {
 	a.dictionary = *dict
 	a.enc = encodings[*charset]
 	a.wordsToCompare = make(chan string, workers)
+	a.result = make(map[string]struct{})
 
 	return &a
 }
@@ -81,7 +82,7 @@ func (a *anagram) worker(word *string) {
 		check(err)
 		if isAnagram(*word, wordFromDict) {
 			a.mutex.Lock()
-			a.result = append(a.result, wordFromDict)
+			a.result[wordFromDict] = struct{}{}
 			a.mutex.Unlock()
 		}
 	}
