@@ -1,8 +1,11 @@
 # anagram-find
+
 Find anagrams for given word in dictionary.
 
-# Usage
+## Usage
+
 `anagram-find -w <word> -d <dictionary> -e <encoding>`
 
-### TODO
-Tests
+## TODO
+
+Add version
