@@ -9,6 +9,12 @@ build:
 	mkdir -p release
 	zip release/$(binary_name)-linux.zip bin/$(binary_name)
 
+test:
+	go test ./...
+
+bench:
+	go test ./... -benchmem -bench=. -run=^$$
+
 deps:
 	go get golang.org/x/text/transform
 	go get golang.org/x/text/encoding

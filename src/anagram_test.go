@@ -18,6 +18,27 @@ func BenchmarkAnagram(b *testing.B) {
 	}
 }
 
+func TestIntegration(t *testing.T) {
+	tests := []struct {
+		msg     string
+		word    string
+		dict    string
+		charEnc string
+		answer  []string
+	}{
+		{"Estonian1", "dais", "../lemmad.txt", "windows-1257", []string{"AIDS"}},
+		{"Estonian2", "eesti", "../lemmad.txt", "windows-1257", []string{"eesti", "eetsi", "eiste"}},
+	}
+
+	for _, tt := range tests {
+		var a *anagram
+		a = newAnagram(&tt.dict, &tt.charEnc)
+		a.findAnagram(&tt.word)
+		if !reflect.DeepEqual(a.result, tt.answer) {
+			t.Error("Expected:", tt.answer, "got:", a.result)
+		}
+	}
+}
 func TestIsAnagram(t *testing.T) {
 	tests := []struct {
 		msg    string
@@ -77,7 +98,6 @@ func TestSplit(t *testing.T) {
 				var got [][]byte
 				go split(tt.buf, tt.lim, chunks)
 				for chunk := range chunks {
-					t.Log(chunk)
 					got = append(got, chunk)
 				}
 				return got
