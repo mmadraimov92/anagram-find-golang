@@ -1,10 +1,13 @@
-files = src/*
-binary_name = anagram-find
+FILES = src/*
+BINARY = anagram-find
+
+VERSION=`git describe --tags`
+BUILD=`date +%FT%T%z`
 
 all: deps build
 
 build:
-	CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w -extldflags "-static"' -o bin/$(binary_name) $(files)
+	CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w -extldflags "-static"' -o bin/$(BINARY) $(FILES)
 
 	mkdir -p release
 	zip release/$(binary_name)-linux.zip bin/$(binary_name)
