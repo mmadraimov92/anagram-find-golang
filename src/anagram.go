@@ -123,7 +123,7 @@ func check(e error) {
 func split(buf []byte, lim int, chunks chan<- []byte) {
 	defer close(chunks)
 	var chunk []byte
-	for len(buf) >= lim {
+	for len(buf) > lim {
 		for i, v := range buf[lim:] {
 			if v == 10 {
 				chunk, buf = buf[:lim+i], buf[lim+i+1:]
