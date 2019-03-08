@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"runtime"
 	"strings"
 	"time"
 )
@@ -16,12 +17,16 @@ var (
 )
 
 const (
-	charsNum = 512    // Max index for char, 384 for estonian?
-	workers  = 4 * 16 // Number of worker routines to spawn
+	charsNum = 512 // Max index for char, 384 for estonian?
+)
+
+var (
+	workers = runtime.NumCPU() * 2 // Number of worker routines to spawn
 )
 
 func main() {
 	start := time.Now()
+	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
 	flagParse()
 
 	var a *anagram

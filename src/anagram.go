@@ -3,12 +3,14 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"io/ioutil"
+	"io"
+	"os"
 	"sync"
 	"unicode"
 	"unicode/utf8"
 
 	"golang.org/x/text/transform"
+	"launchpad.net/gommap"
 )
 
 type anagram struct {
@@ -51,18 +53,31 @@ func (a *anagram) producer() {
 	var done = make(chan bool, producers)
 	var chunks = make(chan []byte, producers)
 
-	file, err := ioutil.ReadFile(a.dictionary)
+	file, err := os.Open(a.dictionary)
+	check(err)
+	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ, gommap.MAP_PRIVATE)
 	check(err)
 
-	go split(file, len(file)/producers, chunks)
+	go split(mmap, len(mmap)/producers, chunks)
 
 	for v := range chunks {
 		go func(v []byte) {
-			scanner := bufio.NewScanner(bytes.NewReader(v))
-			for scanner.Scan() {
-				a.wordsToCompare <- scanner.Text()
+			defer func() {
+				done <- true
+			}()
+			reader := bufio.NewReader(bytes.NewReader(v))
+			for {
+				line, _, err := reader.ReadLine()
+
+				if err == io.EOF {
+					break
+				}
+
+				if len(line) != len(*word) {
+					continue
+				}
+				a.wordsToCompare <- string(line)
 			}
-			done <- true
 		}(v)
 	}
 
