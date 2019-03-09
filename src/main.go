@@ -17,16 +17,16 @@ var (
 )
 
 const (
-	charsNum = 512 // Max index for char, 384 for estonian?
+	charsNum int = 512 // Max index for char, 384 for estonian?
 )
 
 var (
-	workers = runtime.NumCPU() * 2 // Number of worker routines to spawn
+	workers = runtime.NumCPU() // Number of worker routines to spawn
 )
 
 func main() {
 	start := time.Now()
-	runtime.GOMAXPROCS(runtime.NumCPU() * 2)
+	runtime.GOMAXPROCS(runtime.NumCPU())
 	flagParse()
 
 	var a *anagram

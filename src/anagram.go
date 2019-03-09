@@ -9,6 +9,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 	"launchpad.net/gommap"
 )
@@ -16,10 +17,11 @@ import (
 type anagram struct {
 	enc            encType             // charset of dictionary file - default windows-1257
 	dictionary     string              // dictionary file
-	wordsToCompare chan string         // channel to send dictionary words
+	wordsToCompare chan []byte         // channel to send dictionary words
 	result         map[string]struct{} // list of found anagrams
 	mutex          sync.Mutex
 	wg             sync.WaitGroup
+	dec            *encoding.Decoder
 }
 
 func newAnagram(dict, charset *string) *anagram {
@@ -27,14 +29,16 @@ func newAnagram(dict, charset *string) *anagram {
 
 	a.dictionary = *dict
 	a.enc = encodings[*charset]
-	a.wordsToCompare = make(chan string, workers)
+	a.wordsToCompare = make(chan []byte, workers*4)
 	a.result = make(map[string]struct{})
+	dec := a.enc.e.NewDecoder()
+	a.dec = dec
 
 	return &a
 }
 
 func (a *anagram) findAnagram(word *string) {
-	go a.producer()
+	go a.producer(word)
 
 	for i := 0; i < workers; i++ {
 		a.wg.Add(1)
@@ -43,7 +47,7 @@ func (a *anagram) findAnagram(word *string) {
 	a.wg.Wait()
 }
 
-func (a *anagram) producer() {
+func (a *anagram) producer(word *string) {
 	defer func() {
 		close(a.wordsToCompare)
 	}()
@@ -55,6 +59,7 @@ func (a *anagram) producer() {
 
 	file, err := os.Open(a.dictionary)
 	check(err)
+	defer file.Close()
 	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ, gommap.MAP_PRIVATE)
 	check(err)
 
@@ -73,10 +78,10 @@ func (a *anagram) producer() {
 					break
 				}
 
-				if len(line) != len(*word) {
+				if utf8.RuneCountInString(*word) != len(line) {
 					continue
 				}
-				a.wordsToCompare <- string(line)
+				a.wordsToCompare <- line
 			}
 		}(v)
 	}
@@ -90,14 +95,11 @@ func (a *anagram) worker(word *string) {
 	defer a.wg.Done()
 
 	for line := range a.wordsToCompare {
-		if utf8.RuneCountInString(*word) != utf8.RuneCountInString(line) {
-			continue
-		}
-		wordFromDict, _, err := transform.String(a.enc.e.NewDecoder(), line)
+		wordFromDict, _, err := transform.Bytes(a.dec, line)
 		check(err)
-		if isAnagram(*word, wordFromDict) {
+		if isAnagram(*word, string(wordFromDict)) {
 			a.mutex.Lock()
-			a.result[wordFromDict] = struct{}{}
+			a.result[string(wordFromDict)] = struct{}{}
 			a.mutex.Unlock()
 		}
 	}
