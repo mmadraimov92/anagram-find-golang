@@ -21,6 +21,7 @@ bench:
 deps:
 	go get golang.org/x/text/transform
 	go get golang.org/x/text/encoding
+	go get launchpad.net/gommap
 
 clean:
 	go clean
