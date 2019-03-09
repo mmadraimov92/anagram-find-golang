@@ -15,13 +15,12 @@ import (
 )
 
 type anagram struct {
-	enc            encType             // charset of dictionary file - default windows-1257
-	dictionary     string              // dictionary file
-	wordsToCompare chan []byte         // channel to send dictionary words
-	result         map[string]struct{} // list of found anagrams
-	mutex          sync.Mutex
-	wg             sync.WaitGroup
-	dec            *encoding.Decoder
+	enc        encType             // charset of dictionary file - default windows-1257
+	dictionary string              // dictionary file
+	result     map[string]struct{} // list of found anagrams
+	mutex      sync.Mutex
+	wg         sync.WaitGroup
+	dec        *encoding.Decoder
 }
 
 func newAnagram(dict, charset *string) *anagram {
@@ -29,7 +28,6 @@ func newAnagram(dict, charset *string) *anagram {
 
 	a.dictionary = *dict
 	a.enc = encodings[*charset]
-	a.wordsToCompare = make(chan []byte, workers*4)
 	a.result = make(map[string]struct{})
 	dec := a.enc.e.NewDecoder()
 	a.dec = dec
@@ -38,24 +36,16 @@ func newAnagram(dict, charset *string) *anagram {
 }
 
 func (a *anagram) findAnagram(word *string) {
-	go a.producer(word)
-
-	for i := 0; i < workers; i++ {
-		a.wg.Add(1)
-		go a.worker(word)
-	}
+	a.wg.Add(1)
+	go a.worker(word)
 	a.wg.Wait()
 }
 
-func (a *anagram) producer(word *string) {
-	defer func() {
-		close(a.wordsToCompare)
-	}()
+func (a *anagram) worker(word *string) {
+	defer a.wg.Done()
 
-	producers := workers
-
-	var done = make(chan bool, producers)
-	var chunks = make(chan []byte, producers)
+	var done = make(chan bool, workers)
+	var chunks = make(chan []byte, workers)
 
 	file, err := os.Open(a.dictionary)
 	check(err)
@@ -63,7 +53,7 @@ func (a *anagram) producer(word *string) {
 	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ, gommap.MAP_PRIVATE)
 	check(err)
 
-	go split(mmap, len(mmap)/producers, chunks)
+	go split(mmap, len(mmap)/workers, chunks)
 
 	for v := range chunks {
 		go func(v []byte) {
@@ -81,28 +71,21 @@ func (a *anagram) producer(word *string) {
 				if utf8.RuneCountInString(*word) != len(line) {
 					continue
 				}
-				a.wordsToCompare <- line
+				wordFromDict, _, err := transform.Bytes(a.dec, line)
+				check(err)
+				if isAnagram(*word, string(wordFromDict)) {
+					a.mutex.Lock()
+					a.result[string(wordFromDict)] = struct{}{}
+					a.mutex.Unlock()
+				}
 			}
 		}(v)
 	}
 
-	for i := 0; i < producers; i++ {
+	for i := 0; i < workers; i++ {
 		<-done
 	}
-}
 
-func (a *anagram) worker(word *string) {
-	defer a.wg.Done()
-
-	for line := range a.wordsToCompare {
-		wordFromDict, _, err := transform.Bytes(a.dec, line)
-		check(err)
-		if isAnagram(*word, string(wordFromDict)) {
-			a.mutex.Lock()
-			a.result[string(wordFromDict)] = struct{}{}
-			a.mutex.Unlock()
-		}
-	}
 }
 
 func isAnagram(str1, str2 string) bool {
