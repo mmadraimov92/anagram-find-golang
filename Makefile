@@ -10,7 +10,7 @@ build:
 	CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w -extldflags "-static"' -o bin/$(BINARY) $(FILES)
 
 	mkdir -p release
-	zip release/$(binary_name)-linux.zip bin/$(binary_name)
+	zip release/$(BINARY)-linux.zip bin/$(BINARY)
 
 test:
 	go test ./...
