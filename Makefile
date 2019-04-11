@@ -22,6 +22,7 @@ deps:
 	go get golang.org/x/text/transform
 	go get golang.org/x/text/encoding
 	go get launchpad.net/gommap
+	go get github.com/google/go-cmp/cmp
 
 clean:
 	go clean

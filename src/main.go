@@ -16,10 +16,6 @@ var (
 	charEnc = flag.String("e", "windows-1257", "Encoding of dictionary file")
 )
 
-const (
-	charsNum int = 512 // Max index for char, 384 for estonian?
-)
-
 var (
 	workers = runtime.NumCPU() // Number of worker routines to spawn
 )
