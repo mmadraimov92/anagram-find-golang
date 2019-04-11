@@ -93,28 +93,26 @@ func isAnagram(str1, str2 string) bool {
 		return false
 	}
 	sourceMap := make(map[rune]int)
-	compareMap := make(map[rune]int)
 
 	for _, r1 := range str1 {
 		_, ok := sourceMap[unicode.ToLower(r1)]
 		if !ok {
-			sourceMap[unicode.ToLower(r1)] = 0
+			sourceMap[unicode.ToLower(r1)] = 1
 		} else {
 			sourceMap[unicode.ToLower(r1)]++
 		}
 	}
 
 	for _, r2 := range str2 {
-		_, ok := compareMap[unicode.ToLower(r2)]
+		_, ok := sourceMap[unicode.ToLower(r2)]
 		if !ok {
-			compareMap[unicode.ToLower(r2)] = 0
-		} else {
-			compareMap[unicode.ToLower(r2)]++
+			return false
 		}
+		sourceMap[unicode.ToLower(r2)]--
 	}
 
-	for k, v := range sourceMap {
-		if w, ok := compareMap[k]; !ok || v != w {
+	for _, v := range sourceMap {
+		if v != 0 {
 			return false
 		}
 	}
