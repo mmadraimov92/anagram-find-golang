@@ -7,7 +7,6 @@ import (
 	"os"
 	"sync"
 	"unicode"
-	"unicode/utf8"
 
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
@@ -63,12 +62,11 @@ func (a *anagram) worker(word *string) {
 			reader := bufio.NewReader(bytes.NewReader(v))
 			for {
 				line, _, err := reader.ReadLine()
-
 				if err == io.EOF {
 					break
 				}
 
-				if utf8.RuneCountInString(*word) != len(line) {
+				if len(*word) != len(line) {
 					continue
 				}
 				wordFromDict, _, err := transform.Bytes(a.dec, line)
@@ -92,7 +90,7 @@ func isAnagram(str1, str2 string) bool {
 	if len(str1) != len(str2) {
 		return false
 	}
-	// histSize := charsNum
+
 	histogram := make([]int, charsNum)
 
 	for _, r1 := range str1 {
@@ -120,20 +118,22 @@ func check(e error) {
 	}
 }
 
+const newlineASCII = 10
+
 // Split []byte array by "\n" into equal []byte arrays
-func split(buf []byte, lim int, chunks chan<- []byte) {
+func split(data []byte, bytesPerWorker int, chunks chan<- []byte) {
 	defer close(chunks)
 	var chunk []byte
-	for len(buf) > lim {
-		for i, v := range buf[lim:] {
-			if v == 10 {
-				chunk, buf = buf[:lim+i], buf[lim+i+1:]
+	for len(data) > bytesPerWorker {
+		for i, v := range data[bytesPerWorker:] {
+			if v == newlineASCII {
+				chunk, data = data[:bytesPerWorker+i], data[bytesPerWorker+i+1:]
 				break
 			}
 		}
 		chunks <- chunk
 	}
-	if len(buf) > 0 {
-		chunks <- buf
+	if len(data) > 0 {
+		chunks <- data
 	}
 }

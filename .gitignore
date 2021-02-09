@@ -8,3 +8,6 @@ profile/
 
 # Dictionary file
 *.txt
+
+*.out
+*.pprof

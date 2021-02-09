@@ -1,0 +1,11 @@
+github.com/karrick/gobls v1.3.5 h1:YDlwkT2U3R7zX1t86PdHb1+uE74fFiJVP28eAUoTdwY=
+github.com/karrick/gobls v1.3.5/go.mod h1:ctF7wvQjWvKR5SQqqZSKtwaILuZj+kaaeo9dNYb+8d8=
+github.com/pkg/profile v1.5.0 h1:042Buzk+NhDI+DeSAA62RwJL8VAuZUMQZUjCsRz1Mug=
+github.com/pkg/profile v1.5.0/go.mod h1:qBsxPvzyUincmltOk6iyRVxHYg4adc0OFOv72ZdLa18=
+golang.org/x/text v0.3.5 h1:i6eZZ+zk0SOf0xgBpEpPD18qWcJda6q1sxt3S0kzyUQ=
+golang.org/x/text v0.3.5/go.mod h1:5Zoc/QRtKVWzQhOtBMvqHzDpF6irO9z98xDceosuGiQ=
+golang.org/x/tools v0.0.0-20180917221912-90fa682c2a6e/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+launchpad.net/gocheck v0.0.0-20140225173054-000000000087 h1:Izowp2XBH6Ya6rv+hqbceQyw/gSGoXfH/UPoTGduL54=
+launchpad.net/gocheck v0.0.0-20140225173054-000000000087/go.mod h1:hj7XX3B/0A+80Vse0e+BUHsHMTEhd0O4cpUHr/e/BUM=
+launchpad.net/gommap v0.0.0-20121012075617-000000000015 h1:ROjpWoAwfoub5UmgCuZwFvM/kWU+UFfuBXbJ6lz/awU=
+launchpad.net/gommap v0.0.0-20121012075617-000000000015/go.mod h1:+rB9VlRTGlxdpc/nkCoOe0Qxgn/pyVwo9lGtVndZbOo=

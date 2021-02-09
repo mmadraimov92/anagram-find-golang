@@ -26,7 +26,7 @@ var (
 
 func main() {
 	start := time.Now()
-	runtime.GOMAXPROCS(runtime.NumCPU())
+
 	flagParse()
 
 	var a *anagram
