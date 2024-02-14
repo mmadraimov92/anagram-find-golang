@@ -1,15 +1,20 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"io"
 	"os"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
+)
+
+const (
+	charsNum     = 384 // Max index for char, 384 for estonian?
+	workers      = 8   // Number of worker routines to spawn
+	returnASCII  = 13
+	newlineASCII = 10
 )
 
 type anagram struct {
@@ -19,6 +24,7 @@ type anagram struct {
 	mutex      sync.Mutex
 	wg         sync.WaitGroup
 	dec        *encoding.Decoder
+	wordLen    int
 }
 
 func newAnagram(dict, charset *string) *anagram {
@@ -34,6 +40,7 @@ func newAnagram(dict, charset *string) *anagram {
 }
 
 func (a *anagram) findAnagram(word *string) {
+	a.wordLen = utf8.RuneCountInString(*word)
 	a.wg.Add(1)
 	go a.worker(word)
 	a.wg.Wait()
@@ -50,29 +57,34 @@ func (a *anagram) worker(word *string) {
 
 	go split(content, len(content)/workers, chunks)
 
-	for v := range chunks {
-		go func(v []byte) {
+	for chunk := range chunks {
+		go func(chunk []byte) {
 			defer func() {
 				done <- true
 			}()
-			reader := bufio.NewReader(bytes.NewReader(v))
-			for {
-				line, _, err := reader.ReadLine()
-				if err == io.EOF {
-					break
-				}
-				if len([]byte(*word)) != len(line) {
-					continue
-				}
-				wordFromDict, _, err := transform.Bytes(a.dec, line)
-				checkErr(err)
-				if isAnagram(*word, string(wordFromDict)) {
-					a.mutex.Lock()
-					a.result[string(wordFromDict)] = struct{}{}
-					a.mutex.Unlock()
+			var line []byte
+			var offset int
+			for i, v := range chunk {
+				if v == newlineASCII {
+					if chunk[i-1] == returnASCII {
+						line = chunk[offset : i-1]
+					} else {
+						line = chunk[offset:i]
+					}
+					offset = i + 1
+					if a.wordLen != len(line) {
+						continue
+					}
+					wordFromDict, _, err := transform.Bytes(a.dec, line)
+					checkErr(err)
+					if isAnagram(*word, string(wordFromDict)) {
+						a.mutex.Lock()
+						a.result[string(wordFromDict)] = struct{}{}
+						a.mutex.Unlock()
+					}
 				}
 			}
-		}(v)
+		}(chunk)
 	}
 
 	for i := 0; i < workers; i++ {
@@ -111,8 +123,6 @@ func checkErr(e error) {
 		panic(e)
 	}
 }
-
-const newlineASCII = 10
 
 // Split []byte array by "\n" into equal []byte arrays
 func split(data []byte, bytesPerWorker int, chunks chan<- []byte) {

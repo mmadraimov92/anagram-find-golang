@@ -15,14 +15,6 @@ var (
 	charEnc = flag.String("e", "windows-1257", "Encoding of dictionary file")
 )
 
-const (
-	charsNum int = 384 // Max index for char, 384 for estonian?
-)
-
-var (
-	workers = 8 // Number of worker routines to spawn
-)
-
 func main() {
 	start := time.Now()
 

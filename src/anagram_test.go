@@ -7,7 +7,7 @@ import (
 
 func BenchmarkAnagram(b *testing.B) {
 	var word = "eesti"
-	var dict = "../lemmad.txt"
+	var dict = "../rockyou.txt"
 	var charEnc = "windows-1257"
 
 	for n := 0; n < b.N; n++ {
