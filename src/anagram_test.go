@@ -28,7 +28,7 @@ func TestIntegration(t *testing.T) {
 	}{
 		{"Estonian1", "dais", "../lemmad.txt", "windows-1257", []string{"AIDS"}},
 		{"Estonian2", "eesti", "../lemmad.txt", "windows-1257", []string{"eetsi", "eesti", "eiste"}},
-		{"Estonian1", "tžoržet", "../lemmad.txt", "windows-1257", []string{"žoržett"}},
+		{"Estonian3", "tžoržet", "../lemmad.txt", "windows-1257", []string{"žoržett"}},
 	}
 
 	for _, tt := range tests {
@@ -53,6 +53,7 @@ func TestIntegration(t *testing.T) {
 		}()
 	}
 }
+
 func TestIsAnagram(t *testing.T) {
 	tests := []struct {
 		msg    string

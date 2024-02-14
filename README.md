@@ -1,6 +1,6 @@
 # anagram-find
 
-Find anagrams for given word in dictionary.
+Find anagrams for given word in dictionary. Helmes challenge.
 
 ## Usage
 

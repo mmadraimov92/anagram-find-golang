@@ -4,13 +4,13 @@ import (
 	"bufio"
 	"bytes"
 	"io"
-	"os"
 	"sync"
 	"unicode"
+	"unicode/utf8"
 
+	"golang.org/x/exp/mmap"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
-	"launchpad.net/gommap"
 )
 
 type anagram struct {
@@ -46,13 +46,15 @@ func (a *anagram) worker(word *string) {
 	var done = make(chan bool, workers)
 	var chunks = make(chan []byte, workers)
 
-	file, err := os.Open(a.dictionary)
-	check(err)
+	file, err := mmap.Open(a.dictionary)
+	checkErr(err)
 	defer file.Close()
-	mmap, err := gommap.Map(file.Fd(), gommap.PROT_READ, gommap.MAP_PRIVATE)
-	check(err)
 
-	go split(mmap, len(mmap)/workers, chunks)
+	dict := make([]byte, file.Len())
+	_, err = file.ReadAt(dict, 0)
+	checkErr(err)
+
+	go split(dict, file.Len()/workers, chunks)
 
 	for v := range chunks {
 		go func(v []byte) {
@@ -65,12 +67,11 @@ func (a *anagram) worker(word *string) {
 				if err == io.EOF {
 					break
 				}
-
-				if len(*word) != len(line) {
+				if utf8.RuneCountInString(*word) != len(line) {
 					continue
 				}
 				wordFromDict, _, err := transform.Bytes(a.dec, line)
-				check(err)
+				checkErr(err)
 				if isAnagram(*word, string(wordFromDict)) {
 					a.mutex.Lock()
 					a.result[string(wordFromDict)] = struct{}{}
@@ -112,7 +113,7 @@ func isAnagram(str1, str2 string) bool {
 	return true
 }
 
-func check(e error) {
+func checkErr(e error) {
 	if e != nil {
 		panic(e)
 	}

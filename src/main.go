@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"reflect"
-	"runtime"
 	"strings"
 	"time"
 )
@@ -21,7 +20,7 @@ const (
 )
 
 var (
-	workers = runtime.NumCPU() // Number of worker routines to spawn
+	workers = 8 // Number of worker routines to spawn
 )
 
 func main() {
@@ -34,7 +33,7 @@ func main() {
 	a.findAnagram(word)
 	elapsed := time.Since(start)
 
-	fmt.Print(int64(elapsed/time.Microsecond), ",")
+	fmt.Print(elapsed, ",")
 	keys := reflect.ValueOf(a.result).MapKeys()
 	strkeys := make([]string, len(keys))
 	for i := 0; i < len(keys); i++ {

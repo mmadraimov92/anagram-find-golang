@@ -7,7 +7,7 @@ BUILD=`date +%FT%T%z`
 all: build
 
 build:
-	CGO_ENABLED=0 GOOS=linux go build -ldflags='-s -w -extldflags "-static"' -o bin/$(BINARY) $(FILES)
+	CGO_ENABLED=0 GOOS=darwin go build -ldflags='-s -w -extldflags "-static"' -o bin/$(BINARY) $(FILES)
 
 test:
 	go test ./...
