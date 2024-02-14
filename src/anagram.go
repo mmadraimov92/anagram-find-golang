@@ -24,6 +24,7 @@ type anagram struct {
 	mutex      sync.Mutex
 	wg         sync.WaitGroup
 	dec        *encoding.Decoder
+	word       *string
 	wordLen    int
 }
 
@@ -40,57 +41,16 @@ func newAnagram(dict, charset *string) *anagram {
 }
 
 func (a *anagram) findAnagram(word *string) {
+	a.word = word
 	a.wordLen = utf8.RuneCountInString(*word)
-	a.wg.Add(1)
-	go a.worker(word)
-	a.wg.Wait()
+	a.start()
 }
 
-func (a *anagram) worker(word *string) {
-	defer a.wg.Done()
-
-	var done = make(chan bool, workers)
-	var chunks = make(chan []byte, workers)
-
+func (a *anagram) start() {
 	content, err := os.ReadFile(a.dictionary)
 	checkErr(err)
 
-	go split(content, len(content)/workers, chunks)
-
-	for chunk := range chunks {
-		go func(chunk []byte) {
-			defer func() {
-				done <- true
-			}()
-			var line []byte
-			var offset int
-			for i, v := range chunk {
-				if v == newlineASCII {
-					if chunk[i-1] == returnASCII {
-						line = chunk[offset : i-1]
-					} else {
-						line = chunk[offset:i]
-					}
-					offset = i + 1
-					if a.wordLen != len(line) {
-						continue
-					}
-					wordFromDict, _, err := transform.Bytes(a.dec, line)
-					checkErr(err)
-					if isAnagram(*word, string(wordFromDict)) {
-						a.mutex.Lock()
-						a.result[string(wordFromDict)] = struct{}{}
-						a.mutex.Unlock()
-					}
-				}
-			}
-		}(chunk)
-	}
-
-	for i := 0; i < workers; i++ {
-		<-done
-	}
-
+	a.split(content, len(content)/workers)
 }
 
 func isAnagram(word, fromDict string) bool {
@@ -125,8 +85,7 @@ func checkErr(e error) {
 }
 
 // Split []byte array by "\n" into equal []byte arrays
-func split(data []byte, bytesPerWorker int, chunks chan<- []byte) {
-	defer close(chunks)
+func (a *anagram) split(data []byte, bytesPerWorker int) {
 	var chunk []byte
 	for len(data) > bytesPerWorker {
 		for i, v := range data[bytesPerWorker:] {
@@ -135,9 +94,37 @@ func split(data []byte, bytesPerWorker int, chunks chan<- []byte) {
 				break
 			}
 		}
-		chunks <- chunk
+		a.wg.Add(1)
+		go a.process(chunk)
 	}
 	if len(data) > 0 {
-		chunks <- data
+		a.wg.Add(1)
+		go a.process(data)
+	}
+	a.wg.Wait()
+}
+
+func (a *anagram) process(chunk []byte) {
+	defer a.wg.Done()
+
+	var offset int
+	for i := 0; i < len(chunk); i++ {
+		if chunk[i] == newlineASCII {
+			line := chunk[offset:i]
+			if chunk[i-1] == returnASCII {
+				line = line[:len(line)-1]
+			}
+			offset = i + 1
+			if a.wordLen != len(line) {
+				continue
+			}
+			wordFromDict, _, err := transform.Bytes(a.dec, line)
+			checkErr(err)
+			if isAnagram(*a.word, string(wordFromDict)) {
+				a.mutex.Lock()
+				a.result[string(wordFromDict)] = struct{}{}
+				a.mutex.Unlock()
+			}
+		}
 	}
 }
