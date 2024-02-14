@@ -4,11 +4,10 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"os"
 	"sync"
 	"unicode"
-	"unicode/utf8"
 
-	"golang.org/x/exp/mmap"
 	"golang.org/x/text/encoding"
 	"golang.org/x/text/transform"
 )
@@ -46,15 +45,10 @@ func (a *anagram) worker(word *string) {
 	var done = make(chan bool, workers)
 	var chunks = make(chan []byte, workers)
 
-	file, err := mmap.Open(a.dictionary)
-	checkErr(err)
-	defer file.Close()
-
-	dict := make([]byte, file.Len())
-	_, err = file.ReadAt(dict, 0)
+	content, err := os.ReadFile(a.dictionary)
 	checkErr(err)
 
-	go split(dict, file.Len()/workers, chunks)
+	go split(content, len(content)/workers, chunks)
 
 	for v := range chunks {
 		go func(v []byte) {
@@ -67,7 +61,7 @@ func (a *anagram) worker(word *string) {
 				if err == io.EOF {
 					break
 				}
-				if utf8.RuneCountInString(*word) != len(line) {
+				if len([]byte(*word)) != len(line) {
 					continue
 				}
 				wordFromDict, _, err := transform.Bytes(a.dec, line)
@@ -87,20 +81,19 @@ func (a *anagram) worker(word *string) {
 
 }
 
-func isAnagram(str1, str2 string) bool {
-	if len(str1) != len(str2) {
-		return false
-	}
+func isAnagram(word, fromDict string) bool {
+	histogram := make([]int8, charsNum)
 
-	histogram := make([]int, charsNum)
-
-	for _, r1 := range str1 {
+	for _, r1 := range word {
 		ord := int(unicode.ToLower(r1))
 		histogram[ord]++
 	}
 
-	for _, r2 := range str2 {
+	for _, r2 := range fromDict {
 		ord := int(unicode.ToLower(r2))
+		if ord > charsNum {
+			return false
+		}
 		histogram[ord]--
 	}
 

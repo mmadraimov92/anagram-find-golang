@@ -6,10 +6,9 @@ import (
 )
 
 func BenchmarkAnagram(b *testing.B) {
-	var word = "hello"
+	var word = "eesti"
 	var dict = "../lemmad.txt"
 	var charEnc = "windows-1257"
-	b.N = 30
 
 	for n := 0; n < b.N; n++ {
 		var a *anagram
@@ -20,7 +19,7 @@ func BenchmarkAnagram(b *testing.B) {
 
 func TestIntegration(t *testing.T) {
 	tests := []struct {
-		msg     string
+		name    string
 		word    string
 		dict    string
 		charEnc string
@@ -56,7 +55,7 @@ func TestIntegration(t *testing.T) {
 
 func TestIsAnagram(t *testing.T) {
 	tests := []struct {
-		msg    string
+		name   string
 		word1  string
 		word2  string
 		answer bool
@@ -77,7 +76,7 @@ func TestIsAnagram(t *testing.T) {
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.msg, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel() // run sub-tests in parallel
 			result := isAnagram(tt.word1, tt.word2)
 			if tt.answer != result {
@@ -89,7 +88,7 @@ func TestIsAnagram(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	tests := []struct {
-		msg    string
+		name   string
 		buf    []byte
 		lim    int
 		answer [][]byte
@@ -106,7 +105,7 @@ func TestSplit(t *testing.T) {
 
 	for _, tt := range tests {
 		tt := tt
-		t.Run(tt.msg, func(t *testing.T) {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel() // run sub-tests in parallel
 			result := func() [][]byte {
 				chunks := make(chan []byte)

@@ -13,7 +13,7 @@ test:
 	go test ./...
 
 bench:
-	go test ./... -benchmem -bench=. -run=^$$
+	go test ./... -benchmem -bench=. -cpuprofile='cpu.prof' -memprofile='mem.prof' -run=^$$
 
 clean:
 	go clean

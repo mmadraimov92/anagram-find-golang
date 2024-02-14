@@ -16,7 +16,7 @@ var (
 )
 
 const (
-	charsNum int = 512 // Max index for char, 384 for estonian?
+	charsNum int = 384 // Max index for char, 384 for estonian?
 )
 
 var (
@@ -35,11 +35,11 @@ func main() {
 
 	fmt.Print(elapsed, ",")
 	keys := reflect.ValueOf(a.result).MapKeys()
-	strkeys := make([]string, len(keys))
+	result := make([]string, len(keys))
 	for i := 0; i < len(keys); i++ {
-		strkeys[i] = keys[i].String()
+		result[i] = keys[i].String()
 	}
-	fmt.Println(strings.Join(strkeys, ","))
+	fmt.Println(strings.Join(result, ","))
 
 	return
 }
