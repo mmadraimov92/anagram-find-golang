@@ -11,10 +11,10 @@ import (
 )
 
 const (
-	charsNum     = 384 // Max index for char, 384 for estonian?
-	workers      = 8   // Number of worker routines to spawn
-	returnASCII  = 13
-	newlineASCII = 10
+	charsNum          = 384 // Max index for char, 384 for estonian?
+	workers           = 8   // Number of worker routines to spawn
+	returnASCII  byte = '\r'
+	newlineASCII byte = '\n'
 )
 
 type anagram struct {
@@ -107,10 +107,11 @@ func (a *anagram) split(data []byte, bytesPerWorker int) {
 func (a *anagram) process(chunk []byte) {
 	defer a.wg.Done()
 
+	var line []byte
 	var offset int
-	for i := 0; i < len(chunk); i++ {
-		if chunk[i] == newlineASCII {
-			line := chunk[offset:i]
+	for i, b := range chunk {
+		if b == newlineASCII {
+			line = chunk[offset:i]
 			if chunk[i-1] == returnASCII {
 				line = line[:len(line)-1]
 			}
