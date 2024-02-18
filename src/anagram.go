@@ -2,15 +2,16 @@ package main
 
 import (
 	"os"
+	"runtime"
 	"sync"
 )
 
 const (
-	charsNum          = 384 // Max index for char, 384 for estonian?
-	workers           = 8   // Number of worker routines to spawn
 	returnASCII  byte = '\r'
 	newlineASCII byte = '\n'
 )
+
+var workers = runtime.NumCPU() // Number of worker routines to spawn
 
 type anagram struct {
 	dictionary string              // dictionary file
@@ -38,40 +39,33 @@ func (a *anagram) findAnagram(word *string) {
 
 func (a *anagram) start() {
 	content, err := os.ReadFile(a.dictionary)
-	checkErr(err)
+	if err != nil {
+		panic(err)
+	}
 
 	a.split(content, len(content)/workers)
 }
 
 func isAnagram(word, fromDict []byte) bool {
-	histogram := make([]int8, charsNum)
+	histogram := make([]int8, 256)
 
 	for _, r1 := range word {
-		ord := int(r1)
+		ord := uint8(r1)
 		histogram[ord]++
 	}
 
 	for _, r2 := range fromDict {
-		ord := int(r2)
-		if ord > charsNum {
-			return false
-		}
+		ord := uint8(r2)
 		histogram[ord]--
 	}
 
-	for i := 0; i < charsNum; i++ {
+	for i := 0; i < 256; i++ {
 		if histogram[i] != 0 {
 			return false
 		}
 	}
 
 	return true
-}
-
-func checkErr(e error) {
-	if e != nil {
-		panic(e)
-	}
 }
 
 // Split []byte array by "\n" into equal []byte arrays
@@ -97,20 +91,15 @@ func (a *anagram) split(data []byte, bytesPerWorker int) {
 func (a *anagram) process(chunk []byte) {
 	defer a.wg.Done()
 
-	var line []byte
 	var offset int
 	for i, b := range chunk {
 		if b == newlineASCII {
-			line = chunk[offset:i]
-			offset = i + 1
-			if a.wordLen != len(line) {
-				continue
-			}
-			if isAnagram(a.word, line) {
+			if a.wordLen == len(chunk[offset:i]) && isAnagram(a.word, chunk[offset:i]) {
 				a.mutex.Lock()
-				a.result[string(line)] = struct{}{}
+				a.result[string(chunk[offset:i])] = struct{}{}
 				a.mutex.Unlock()
 			}
+			offset = i + 1
 		}
 	}
 }
