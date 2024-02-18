@@ -102,9 +102,6 @@ func (a *anagram) process(chunk []byte) {
 	for i, b := range chunk {
 		if b == newlineASCII {
 			line = chunk[offset:i]
-			if chunk[i-1] == returnASCII {
-				line = line[:len(line)-1]
-			}
 			offset = i + 1
 			if a.wordLen != len(line) {
 				continue
