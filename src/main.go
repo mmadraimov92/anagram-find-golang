@@ -10,9 +10,8 @@ import (
 )
 
 var (
-	word    = flag.String("w", "", "Input word to search for anagram")
-	dict    = flag.String("d", "", "Dictionary to search from")
-	charEnc = flag.String("e", "windows-1257", "Encoding of dictionary file")
+	word = flag.String("w", "", "Input word to search for anagram")
+	dict = flag.String("d", "", "Dictionary to search from")
 )
 
 func main() {
@@ -21,7 +20,7 @@ func main() {
 	flagParse()
 
 	var a *anagram
-	a = newAnagram(dict, charEnc)
+	a = newAnagram(dict)
 	a.findAnagram(word)
 	elapsed := time.Since(start)
 
@@ -46,11 +45,6 @@ func flagParse() {
 		flag.Usage()
 	}
 	if *dict == "" {
-		flag.Usage()
-	}
-	_, ok := encodings[*charEnc]
-	if !ok {
-		fmt.Println("Please select correct encoding with '-e'. Check charset_table.go for reference.")
 		flag.Usage()
 	}
 }

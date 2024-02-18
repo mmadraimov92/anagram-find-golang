@@ -8,31 +8,28 @@ import (
 func BenchmarkAnagram(b *testing.B) {
 	var word = "eesti"
 	var dict = "../rockyou.txt"
-	var charEnc = "windows-1257"
 
 	for n := 0; n < b.N; n++ {
 		var a *anagram
-		a = newAnagram(&dict, &charEnc)
+		a = newAnagram(&dict)
 		a.findAnagram(&word)
 	}
 }
 
 func TestAnagram(t *testing.T) {
 	tests := []struct {
-		name    string
-		word    string
-		dict    string
-		charEnc string
-		keys    []string
+		name string
+		word string
+		dict string
+		keys []string
 	}{
-		{"Estonian1", "dais", "../lemmad.txt", "windows-1257", []string{"AIDS"}},
-		{"Estonian2", "eesti", "../lemmad.txt", "windows-1257", []string{"eetsi", "eesti", "eiste"}},
-		{"Estonian3", "tžoržet", "../lemmad.txt", "windows-1257", []string{"žoržett"}},
+		{"Estonian1", "eesti", "../rockyou.txt",
+			[]string{"istee", "siete", "ieste", "etsie", "tesie", "isete", "seite", "eetsi", "estie"}},
 	}
 
 	for _, tt := range tests {
 		var a *anagram
-		a = newAnagram(&tt.dict, &tt.charEnc)
+		a = newAnagram(&tt.dict)
 		a.findAnagram(&tt.word)
 		func() {
 			keys := reflect.ValueOf(a.result).MapKeys()
