@@ -6,10 +6,10 @@ import (
 )
 
 func BenchmarkAnagram(b *testing.B) {
-	var word = "eesti"
+	var word = "search"
 	var dict = "../rockyou.txt"
 
-	for n := 0; n < b.N; n++ {
+	for b.Loop() {
 		var a *anagram
 		a = newAnagram(&dict)
 		a.findAnagram(&word)
