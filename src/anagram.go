@@ -15,8 +15,7 @@ const (
 	maxByte int = 256
 )
 
-var workers = runtime.NumCPU() // Number of worker routines to spawn
-// var workers = 32 // Number of worker routines to spawn
+var workers = 2 * runtime.NumCPU() // Number of worker routines to spawn
 
 type anagram struct {
 	dictionary    string              // dictionary file
